@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <unordered_map>
 #include "Robot.h"
 #include "Berth.h"
 #include "Boat.h"
@@ -18,5 +19,5 @@ public:
     vector<Robot> robots;
     vector<Berth> berths;
     vector<Boat>  boats;
-    vector<Goods> goods;
+    unordered_map<int, Goods> goods;
 };

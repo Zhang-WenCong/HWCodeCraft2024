@@ -1,6 +1,7 @@
 #include <iostream>
 #include "Map.h"
 #include "common.h"
+#include "Solver.h"
 
 using namespace std;
 
@@ -19,6 +20,7 @@ void Init(Map& map) {
                 Robot robot(robots_n, row, col);
                 map.robots.push_back(robot);
                 robots_n++;
+                map.char_map[row][col] = '.';
             }
         }
     }
@@ -40,36 +42,17 @@ void Init(Map& map) {
     fflush(stdout);
 }
 
-int id, money;
-
-void Input(Map& map) {
-    scanf("%d%d", &id, &money); // id：帧序号  money：当前金钱数
-
-    int num;                    
-    scanf("%d", &num);          // num:新增货物数量
-    for(int i = 1; i <= num; i ++) {
-        int x, y, val;          // 货物坐标和金额
-        scanf("%d%d%d", &x, &y, &val);
-        map.goods.push_back({x, y, val, id});
-    }
-
-    for(int i = 0; i < ROBOT_N; i ++)
-        scanf("%d%d%d%d", &map.robots[i].goods, &map.robots[i].x, &map.robots[i].y, &map.robots[i].status);
-
-    for(int i = 0; i < 5; i ++)
-        scanf("%d%d\n", &map.boats[i].status, &map.boats[i].target_berth);
-    
-    char okk[100];
-    scanf("%s", okk);
-}
-
 int main() {
     Map map;
     Init(map);
-    for(int frame = 1; frame <= 15000; frame++) {
-        Input(map);
-        for(int i = 0; i < ROBOT_N; i++)
-            printf("move %d %d\n", i, rand() % 4);
+    Solver solver(&map);
+
+    int frameID;
+    while (scanf("%d", &frameID) != EOF) {
+        solver.get_frame(frameID);
+
+        solver.output_frame();
+
         puts("OK");
         fflush(stdout);
     }
