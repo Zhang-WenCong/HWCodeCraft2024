@@ -38,6 +38,10 @@ void Init(Map& map) {
     
     char okk[100];
     scanf("%s", okk);
+
+    map.init_path_to_berth();
+    map.init_robots();
+
     printf("OK\n");
     fflush(stdout);
 }
