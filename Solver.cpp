@@ -102,8 +102,8 @@ void Solver::update_assign_tasks() {
                 robot.target_goods_id = it->second.goods_id;
                 // robot.target_berth_id = map->path_to_berth_id[it->second.x][it->second.y];
                 it->second.assigned_robot_id = robot.robot_id;
+                break;
             }
-            break;
         }
     }
 }
@@ -134,12 +134,13 @@ void Solver::output_frame() {
             // path非空，就根据path移动
             if(!robot.path_to_goods.empty()) {
                 predict_nxy(robot.x, robot.y, robot.path_to_goods.front(), nx, ny);
-                // 下一步不会撞到其他机器人，走
+                // 下一步不会撞到其他机器人，同时不会撞到障碍
                 if(nxy_set.find(convert_xy(nx, ny)) == nxy_set.end()) {
                     printf("move %d %d\n", robot.robot_id, robot.path_to_goods.front());
                     nxy_set.insert(convert_xy(nx, ny));
                     robot.path_to_goods.pop_front();
                 }
+                // 如果要撞到障碍了，说明可能发生跳帧，这一步不走，重新计算路径
             }
             // 到达目的地
             if(robot.path_to_goods.empty()) {
