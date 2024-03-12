@@ -93,15 +93,14 @@ void Solver::update_assign_tasks() {
         if(!robot.is_idle())
             continue;
         for(auto it = map->goods.begin(); it != map->goods.end(); ++it) {
-            if(it->second.assigned_robot_id != -1) 
+            if(it->second.assigned_robot_id != -1 || map->path_to_berth_id[it->second.x][it->second.y] != robot.target_berth_id) 
                 continue;
-            // 用a*算法查看是否有路径，有就分配, 同时分配货物到泊位路径（已经预计算过）
+            // 用a*算法查看是否有路径，有就分配, 同时分配货物到泊位路径图（已经预计算过）
             if (astar_get_two_path(robot.x, robot.y, it->second.x, it->second.y, 
                                     map->char_map, robot.path_to_goods, map)) {
                 robot.task_type = 0;
                 robot.target_goods_id = it->second.goods_id;
-                robot.target_berth_id = map->path_to_berth_id[it->second.x][it->second.y];
-                robot.path_to_berth = map->path_to_berth[it->second.x][it->second.y];
+                // robot.target_berth_id = map->path_to_berth_id[it->second.x][it->second.y];
                 it->second.assigned_robot_id = robot.robot_id;
             }
             break;
@@ -159,24 +158,18 @@ void Solver::output_frame() {
                 robot.task_type = 0;
                 break;
             }
-            if(!robot.path_to_berth.empty()) {
-                predict_nxy(robot.x, robot.y, robot.path_to_berth.front(), nx, ny);
+            if(map->path_to_berth[robot.x][robot.y][robot.target_berth_id] != -1) {
+                predict_nxy(robot.x, robot.y, map->path_to_berth[robot.x][robot.y][robot.target_berth_id], nx, ny);
                 // 下一步不会撞到其他机器人，走
                 if(nxy_set.find(convert_xy(nx, ny)) == nxy_set.end()) {
-                    printf("move %d %d\n", robot.robot_id, robot.path_to_berth.front());
+                    printf("move %d %d\n", robot.robot_id, map->path_to_berth[robot.x][robot.y][robot.target_berth_id]);
                     nxy_set.insert(convert_xy(nx, ny));
-                    robot.path_to_berth.pop_front();
                 }
             }
             // 到达目的地
-            if(robot.path_to_berth.empty()) {
-                if(robot.goods == 1 && nx == map->berths[robot.target_berth_id].x && ny == map->berths[robot.target_berth_id].y) {
-                    printf("pull %d\n", robot.robot_id);
-                    robot.task_type = -1;
-                }else { // 某些原因如碰撞或者跳帧导致没有到达目标。重新计算路径
-                    astar_get_two_path(robot.x, robot.y, map->berths[robot.target_berth_id].x, map->berths[robot.target_berth_id].y, 
-                                    map->char_map, robot.path_to_berth, map);
-                }
+            if( map->berths[robot.target_berth_id].is_in_berth(nx, ny) && robot.goods == 1) {
+                printf("pull %d\n", robot.robot_id);
+                robot.task_type = -1;
             }
             break;
         default:
@@ -191,10 +184,10 @@ void Solver::output_frame() {
         case 1: // 装货状态或运输完成状态
             if(boat.target_berth == -1) { 
                 // 运输完成，随机找个泊位停靠，后续改成前往货物多运输快的泊位
-                printf("ship %d %d\n", boat.boat_id, rand() % 10);
+                printf("ship %d %d\n", boat.boat_id, boat.boat_id * 2 + rand() % 2);
             }else {
-                if(rand() % 10 < 3)
-                    printf("ship %d\n",boat.boat_id);
+                if(rand() % 100 == 1)
+                    printf("go %d\n",boat.boat_id);
             }
             break;
         case 2: // 泊位外等待状态 

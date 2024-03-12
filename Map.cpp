@@ -39,15 +39,27 @@ void Map::show() {
 // 初始化每个点到最近berth的路径
 void Map::init_path_to_berth() {
     for(auto& berth : berths) {
-        bfs_get_full_path(berth.x, berth.y, berth.berth_id, this->char_map, this);
+        bfs_get_full_canto(berth.x, berth.y, berth.berth_id, this->char_map, this);
     }
+
+    for (auto& berth : berths) {
+        for(int i = 0; i < 4; i++) {
+            for(int j = 0; j < 4; j++) {
+                path_to_berth[berth.x + i][berth.y + j][berth.berth_id] = -1;
+            }
+        }
+    }
+
 }
 
-// 初始化机器人，设定其是否有效
+// 初始化机器人，设定其是否有效和初始泊位
 void Map::init_robots() {
     for(auto& robot : robots) {
         if(!valid_to_berth(robot.x, robot.y))
             robot.is_valid = false;
+        else {
+            robot.target_berth_id = path_to_berth_id[robot.x][robot.y];
+        }
     }
 }
 

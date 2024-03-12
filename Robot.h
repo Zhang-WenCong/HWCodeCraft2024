@@ -18,7 +18,6 @@ public:
 
     int task_type = -1;     // -1未分配任务， 0表示取货， 1表示取到货物后送到泊位
     list<int> path_to_goods;  // 到货物路径
-    list<int> path_to_berth;  // 到泊位路径
 
     Robot(int id, int startX, int startY) : robot_id(id), x(startX), y(startY) {
         status = 1;

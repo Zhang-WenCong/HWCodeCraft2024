@@ -1,4 +1,5 @@
 #include <iostream>
+#include <ctime>
 #include "Map.h"
 #include "common.h"
 #include "Solver.h"
@@ -40,8 +41,11 @@ void Init(Map& map) {
     char okk[100];
     scanf("%s", okk);
 
+    
+    // auto start = clock();
     map.init_path_to_berth();
     map.init_robots();
+    // fprintf(stderr, "cost time: %d s\n", static_cast<int>(clock() - start) / CLOCKS_PER_SEC);
 
 #ifdef DEBUG
     map.show();

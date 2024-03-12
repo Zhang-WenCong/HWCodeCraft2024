@@ -20,5 +20,8 @@ public:
         ,loading_speed(loading_speed) {
     }
 
+    // 是否在泊位内
+    bool is_in_berth(int _x, int _y);
+
     
 };
