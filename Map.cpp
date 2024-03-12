@@ -54,11 +54,40 @@ void Map::init_path_to_berth() {
 
 // 初始化机器人，设定其是否有效和初始泊位
 void Map::init_robots() {
+    bool used_berth[BERTH_N] = {false};
     for(auto& robot : robots) {
         if(!valid_to_berth(robot.x, robot.y))
             robot.is_valid = false;
         else {
-            robot.target_berth_id = path_to_berth_id[robot.x][robot.y];
+            if(!used_berth[path_to_berth_id[robot.x][robot.y]]) {
+                robot.target_berth_id = path_to_berth_id[robot.x][robot.y];
+                used_berth[path_to_berth_id[robot.x][robot.y]] = true;
+            }
+        }
+    }
+    for(auto& robot : robots) {
+        if(!robot.is_valid || robot.target_berth_id != -1)
+            continue;
+        else {
+            for(int i = 0; i < BERTH_N; i++) {
+                if(!used_berth[i] && path_to_berth[robot.x][robot.y][i] != -1){
+                    robot.target_berth_id = i;
+                    used_berth[path_to_berth_id[robot.x][robot.y]] = true;  
+                    break;
+                }
+            }
+        }
+    }
+    for(auto& robot : robots) {
+        if(!robot.is_valid || robot.target_berth_id != -1)
+            continue;
+        else {
+            for(int i = 0; i < BERTH_N; i++) {
+                if(path_to_berth[robot.x][robot.y][(i + robot.robot_id) % BERTH_N] != -1){
+                    robot.target_berth_id = (i + robot.robot_id) % BERTH_N;
+                    break;
+                }
+            }
         }
     }
 }

@@ -135,12 +135,15 @@ void Solver::output_frame() {
             if(!robot.path_to_goods.empty()) {
                 predict_nxy(robot.x, robot.y, robot.path_to_goods.front(), nx, ny);
                 // 下一步不会撞到其他机器人，同时不会撞到障碍
-                if(nxy_set.find(convert_xy(nx, ny)) == nxy_set.end()) {
+                if(nxy_set.find(convert_xy(nx, ny)) == nxy_set.end() && map->valid_to_berth(nx, ny)) {
                     printf("move %d %d\n", robot.robot_id, robot.path_to_goods.front());
                     nxy_set.insert(convert_xy(nx, ny));
                     robot.path_to_goods.pop_front();
+                }else if (!map->valid_to_berth(nx, ny)) {
+                    // 如果要撞到障碍了，说明可能发生跳帧，这一步不走，重新计算路径
+                    astar_get_two_path(robot.x, robot.y, map->goods[robot.target_goods_id].x, map->goods[robot.target_goods_id].y, 
+                                    map->char_map, robot.path_to_goods, map);
                 }
-                // 如果要撞到障碍了，说明可能发生跳帧，这一步不走，重新计算路径
             }
             // 到达目的地
             if(robot.path_to_goods.empty()) {
