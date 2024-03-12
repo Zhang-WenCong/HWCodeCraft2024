@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Map.h"
+#include "common.h"
 #include <vector>
 
 using namespace std;

@@ -30,16 +30,17 @@ void Solver::get_frame(int frame_id_input) {
         }
     }
 
-    for(int i = 0; i < ROBOT_N; i ++)
+    for(int i = 0; i < ROBOT_N; i ++) {
         scanf("%d%d%d%d", &map->robots[i].goods, &map->robots[i].x, &map->robots[i].y, &map->robots[i].status);
-
+    }
     for(int i = 0; i < BOAT_N; i ++)
         scanf("%d%d\n", &map->boats[i].status, &map->boats[i].target_berth);
     
     char okk[100];
     scanf("%s", okk);
+}
 
-    
+void Solver::update_status() {
     // 如果有分配的货物消失，或者有空闲货物同时有空闲robot，更新任务分配
     int remove_num = remove_expired_goods();
     if(remove_num > 0 || (get_idle_goods_num() > 0 && get_idle_robots_num() > 0)) {
@@ -86,8 +87,9 @@ int Solver::remove_expired_goods() {
 void Solver::update_assign_tasks() {
     // 先随机分配，之后换成匈牙利匹配算法
     for(auto& robot : map->robots) {
-        if(!robot.is_valid)
-            continue;
+#ifdef DEBUG
+        robot.show();
+#endif
         if(!robot.is_idle())
             continue;
         for(auto it = map->goods.begin(); it != map->goods.end(); ++it) {
@@ -101,8 +103,8 @@ void Solver::update_assign_tasks() {
                 robot.target_berth_id = map->path_to_berth_id[it->second.x][it->second.y];
                 robot.path_to_berth = map->path_to_berth[it->second.x][it->second.y];
                 it->second.assigned_robot_id = robot.robot_id;
-                break;
             }
+            break;
         }
     }
 }
@@ -111,6 +113,9 @@ void Solver::output_frame() {
     unordered_set<int> nxy_set; // 记录当前所有机器人下一步路径，如果已经有机器人要走这个路径，就暂停避免碰撞
     // 机器人动作
     for(auto& robot : map->robots) {
+#ifdef DEBUG
+            robot.show();
+#endif
         if(!robot.is_valid)
             continue;
         if(robot.status == 0) {

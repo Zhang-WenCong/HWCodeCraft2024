@@ -2,6 +2,7 @@
 #include "Map.h"
 #include "common.h"
 #include "Solver.h"
+#include "PathPlanning.h"
 
 using namespace std;
 
@@ -42,6 +43,10 @@ void Init(Map& map) {
     map.init_path_to_berth();
     map.init_robots();
 
+#ifdef DEBUG
+    map.show();
+#endif
+
     printf("OK\n");
     fflush(stdout);
 }
@@ -54,9 +59,8 @@ int main() {
     int frameID;
     while (scanf("%d", &frameID) != EOF) {
         solver.get_frame(frameID);
-
+        solver.update_status();
         solver.output_frame();
-
         puts("OK");
         fflush(stdout);
     }

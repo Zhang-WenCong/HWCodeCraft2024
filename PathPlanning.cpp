@@ -83,10 +83,9 @@ int heuristic(int x1, int y1, int x2, int y2) {
 // 从终点回溯到起点来重建路径
 void reconstructPath(Node *current, list<int> &path) {
     while (current && current->move != -1) {
-        path.push_back(current->move);
+        path.push_front(current->move);
         current = current->parent;
     }
-    reverse(path.begin(), path.end());
 }
 
 bool astar_get_two_path(int start_row, int start_col, int target_row, int target_col, 
@@ -95,14 +94,12 @@ bool astar_get_two_path(int start_row, int start_col, int target_row, int target
     path.clear();
 
     priority_queue<Node*, vector<Node*>, NodeCompare> openSet;
-    vector<vector<bool>> closedSet(MAP_H, vector<bool>(MAP_W, false));
-    vector<Node*> allNodes; // 存储所有创建的节点，以便最后清理
+    vector<vector<bool>> visited(MAP_H, vector<bool>(MAP_W, false));
 
     Node *startNode = new Node(start_row, start_col);
-    allNodes.push_back(startNode);
-
     startNode->h = heuristic(start_row, start_col, target_row, target_col);
     openSet.push(startNode);
+    visited[start_row][start_col] = true;
 
     while (!openSet.empty()) {
         Node *current = openSet.top();
@@ -110,31 +107,18 @@ bool astar_get_two_path(int start_row, int start_col, int target_row, int target
 
         if (current->x == target_row && current->y == target_col) {
             reconstructPath(current, path);
-            // 清理未使用的节点
-            for (auto node : allNodes) {
-                delete node;
-            }
             return true;
         }
-
-        closedSet[current->x][current->y] = true;
-
         for (int i = 0; i < 4; i++) {
             int nx = current->x + dx[i], ny = current->y + dy[i];
-
-            if (isValid(nx, ny, MAP_H, char_map) && !closedSet[nx][ny]) {
-                Node *successor = new Node(nx, ny, current, reverse_dir(i));
-                allNodes.push_back(successor); // 添加到节点列表中
+            if (isValid(nx, ny, MAP_H, char_map) && !visited[nx][ny]) {
+                Node *successor = new Node(nx, ny, current, i);
                 successor->g = current->g + 1;
                 successor->h = heuristic(nx, ny, target_row, target_col);
                 openSet.push(successor);
+                visited[nx][ny] = true;
             }
         }
-    }
-
-    // 如果没有找到路径，清理所有节点
-    for (auto node : allNodes) {
-        delete node;
     }
 
     return false;  // 没有找到路径

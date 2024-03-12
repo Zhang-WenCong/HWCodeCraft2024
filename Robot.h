@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include "common.h"
 
 using namespace std;
 
@@ -19,7 +20,6 @@ public:
     list<int> path_to_goods;  // 到货物路径
     list<int> path_to_berth;  // 到泊位路径
 
-    
     Robot(int id, int startX, int startY) : robot_id(id), x(startX), y(startY) {
         status = 1;
         goods = 0;
@@ -27,5 +27,7 @@ public:
 
     // 是否空闲
     bool is_idle();
+
+    void show();
 
 };

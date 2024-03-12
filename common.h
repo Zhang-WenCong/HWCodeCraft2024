@@ -1,5 +1,6 @@
 #pragma once
 
+// #define DEBUG
 
 const int MAP_H = 200;  // 地图h
 const int MAP_W = 200;  // 地图w

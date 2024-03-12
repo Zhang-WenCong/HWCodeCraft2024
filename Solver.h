@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Map.h"
+#include "common.h"
 
 
 
@@ -23,6 +24,8 @@ public:
     int get_idle_goods_num();
 
     int remove_expired_goods();
+
+    void update_status();
 
     void update_assign_tasks();
 

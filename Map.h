@@ -7,6 +7,7 @@
 #include "Berth.h"
 #include "Boat.h"
 #include "Goods.h"
+#include "common.h"
 
 using namespace std;
 
@@ -33,4 +34,6 @@ public:
 
     // 判断某个点能否到达berth
     bool valid_to_berth(int _x, int _y);
+
+    void show();
 };
