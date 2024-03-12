@@ -9,7 +9,8 @@ int convert_xy(int _x, int _y) {
 }
 
 void predict_nxy(int _x, int _y, int move, int& nx, int& ny) {
-
+    nx = _x + dx[move];
+    ny = _y + dy[move];
 }
 
 int Solver::goods_id = 0;
@@ -183,6 +184,13 @@ void Solver::output_frame() {
         case 0: // 移动中
             break;
         case 1: // 装货状态或运输完成状态
+            if(boat.target_berth == -1) { 
+                // 运输完成，随机找个泊位停靠，后续改成前往货物多运输快的泊位
+                printf("ship %d %d\n", boat.boat_id, rand() % 10);
+            }else {
+                if(rand() % 10 < 3)
+                    printf("ship %d\n",boat.boat_id);
+            }
             break;
         case 2: // 泊位外等待状态 
             break;
