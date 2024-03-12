@@ -83,8 +83,8 @@ void Map::init_robots() {
             continue;
         else {
             for(int i = 0; i < BERTH_N; i++) {
-                if(path_to_berth[robot.x][robot.y][(i + robot.robot_id) % BERTH_N] != -1){
-                    robot.target_berth_id = (i + robot.robot_id) % BERTH_N;
+                if(path_to_berth[robot.x][robot.y][i] != -1){
+                    robot.target_berth_id = i;
                     break;
                 }
             }

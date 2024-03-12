@@ -100,11 +100,25 @@ void Solver::update_assign_tasks() {
                                     map->char_map, robot.path_to_goods, map)) {
                 robot.task_type = 0;
                 robot.target_goods_id = it->second.goods_id;
-                // robot.target_berth_id = map->path_to_berth_id[it->second.x][it->second.y];
                 it->second.assigned_robot_id = robot.robot_id;
                 break;
             }
         }
+        // // 没分到
+        // if(robot.is_idle()) {
+        //     for(auto it = map->goods.begin(); it != map->goods.end(); ++it) {
+        //         if(it->second.assigned_robot_id != -1) 
+        //             continue;
+        //         // 用a*算法查看是否有路径，有就分配, 同时分配货物到泊位路径图（已经预计算过）
+        //         if (astar_get_two_path(robot.x, robot.y, it->second.x, it->second.y, 
+        //                                 map->char_map, robot.path_to_goods, map)) {
+        //             robot.task_type = 0;
+        //             robot.target_goods_id = it->second.goods_id;
+        //             it->second.assigned_robot_id = robot.robot_id;
+        //         }
+        //         break;
+        //     }
+        // }
     }
 }
 
@@ -190,7 +204,7 @@ void Solver::output_frame() {
                 // 运输完成，随机找个泊位停靠，后续改成前往货物多运输快的泊位
                 printf("ship %d %d\n", boat.boat_id, boat.boat_id * 2 + rand() % 2);
             }else {
-                if(rand() % 100 == 1)
+                if(rand() % 500 == 1)
                     printf("go %d\n",boat.boat_id);
             }
             break;
