@@ -220,12 +220,15 @@ void Solver::output_frame() {
             if( map->berths[robot.target_berth_id].is_in_berth(nx, ny) && robot.goods == 1) {
                 printf("pull %d\n", robot.robot_id);
                 robot.task_type = -1;
+                // 当前港口货物数量+1
+                map->berths[robot.target_berth_id].cur_goods_num++;
             }
             break;
         default:
             break;
         }
     }
+
     // 船只动作
     for(auto& boat : map->boats) {
         switch (boat.status) {
@@ -233,14 +236,26 @@ void Solver::output_frame() {
             break;
         case 1: // 装货状态或运输完成状态
             if(boat.target_berth == -1) { 
-                // 运输完成，随机找个泊位停靠，后续改成前往货物多运输快的泊位
                 printf("ship %d %d\n", boat.boat_id, boat.boat_id * 2 + rand() % 2);
+                // if(map->berths[boat.boat_id * 2].cur_goods_num > map->berths[boat.boat_id * 2 + 1].cur_goods_num)
+                //     printf("ship %d %d\n", boat.boat_id, boat.boat_id * 2);
+                // else
+                //     printf("ship %d %d\n", boat.boat_id, boat.boat_id * 2 + 1);
+                boat.cur_goods = 0;
             }else {
                 // 最后关头，赶紧走
                 if(cur_frame + map->berths[boat.target_berth].transport_time >= 15000)
                     printf("go %d\n",boat.boat_id);
                 else if(rand() % 300 == 1)
                     printf("go %d\n",boat.boat_id);
+                // else if(boat.cur_goods >= boat.capacity / 2)
+                //     printf("go %d\n",boat.boat_id);
+                // else {
+                //     int l_num = min(map->berths[boat.target_berth].cur_goods_num, map->berths[boat.target_berth].loading_speed);
+                //     boat.cur_goods += l_num;
+                //     map->berths[boat.target_berth].cur_goods_num -= l_num;
+                // }
+
             }
             break;
         case 2: // 泊位外等待状态 
