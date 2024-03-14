@@ -6,8 +6,8 @@ bool Robot::is_idle() {
 }
 
 void Robot::show() {
-    fprintf(stderr, "Robot %d (%d, %d, %d %d), is_valid %d\n", robot_id, x, y, goods, status, is_valid);
-    fprintf(stderr, "task_type %d, tar_goods_id (%d)\n", task_type, target_goods_id);
+    fprintf(stderr, "Robot %d (x:%d, y:%d, goods:%d status:%d), is_valid %d\n", robot_id, x, y, goods, status, is_valid);
+    fprintf(stderr, "task_type %d, tar_goods_id (%d), tar_berth_id (%d)\n", task_type, target_goods_id, target_berth_id);
     if(!path_to_goods.empty())
         fprintf(stderr, "next move : %d \n", path_to_goods.front());
 }

@@ -3,6 +3,7 @@
 #include <vector>
 #include <list>
 #include <unordered_map>
+#include <queue>
 #include "Robot.h"
 #include "Berth.h"
 #include "Boat.h"
@@ -21,7 +22,9 @@ public:
     vector<Robot> robots;
     vector<Berth> berths;
     vector<Boat>  boats;
+    
     unordered_map<int, Goods> goods;
+    vector<priority_queue<Goods> > goods_queue = vector(10, priority_queue<Goods>());
 
     // [i][j][k] 表示坐标i，j到泊位k的下一步动作
     vector<vector<vector<int>>> path_to_berth = vector<vector<vector<int>> >(200, vector<vector<int>>(200, vector<int>(BERTH_N, -1)));

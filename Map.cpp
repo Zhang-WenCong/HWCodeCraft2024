@@ -46,6 +46,7 @@ void Map::init_path_to_berth() {
         for(int i = 0; i < 4; i++) {
             for(int j = 0; j < 4; j++) {
                 path_to_berth[berth.x + i][berth.y + j][berth.berth_id] = -1;
+                path_to_berth_id[berth.x + i][berth.y + j] = berth.berth_id;
             }
         }
     }
@@ -54,7 +55,7 @@ void Map::init_path_to_berth() {
 
 // 初始化机器人，设定其是否有效和初始泊位
 void Map::init_robots() {
-    bool used_berth[BERTH_N] = {false};
+    vector<bool> used_berth(10, false);
     // 先把最近的港口设为目标
     for(auto& robot : robots) {
         if(!valid_to_berth(robot.x, robot.y))
@@ -70,13 +71,12 @@ void Map::init_robots() {
     for(auto& robot : robots) {
         if(!robot.is_valid || robot.target_berth_id != -1)
             continue;
-        else {
-            for(int i = 0; i < BERTH_N; i++) {
-                if(!used_berth[i] && path_to_berth[robot.x][robot.y][i] != -1){
-                    robot.target_berth_id = i;
-                    used_berth[path_to_berth_id[robot.x][robot.y]] = true;  
-                    break;
-                }
+
+        for(int i = 0; i < BERTH_N; i++) {
+            if(!used_berth[i] && path_to_berth[robot.x][robot.y][i] != -1){
+                robot.target_berth_id = i;
+                used_berth[i] = true;  
+                break;
             }
         }
     }

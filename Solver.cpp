@@ -18,7 +18,9 @@ void Solver::get_frame(int frame_id_input) {
         int x, y, val;          // 货物坐标和金额
         scanf("%d%d%d", &x, &y, &val);
         if(map->valid_to_berth(x, y)) {
-            map->goods[goods_id] = Goods(x, y, val, cur_frame, goods_id);
+            Goods goods(x, y, val, cur_frame, goods_id, val / map->path_to_berth_len[x][y]);
+            map->goods[goods_id] = goods;
+            map->goods_queue[map->path_to_berth_id[x][y]].push(goods);
             goods_id++;
         }
     }
@@ -84,34 +86,19 @@ void Solver::update_assign_tasks() {
 #endif
         if(!robot.is_idle())
             continue;
-        for(auto it = map->goods.begin(); it != map->goods.end(); ++it) {
-            if(it->second.assigned_robot_id != -1 || map->path_to_berth_id[it->second.x][it->second.y] != robot.target_berth_id) 
-                continue;
-            // 用a*算法查看是否有路径，有就分配, 同时分配货物到泊位路径图（已经预计算过）
-            if (astar_get_two_path(robot.x, robot.y, it->second.x, it->second.y, 
-                                    map->char_map, robot.path_to_goods, map)) {
+        while(!map->goods_queue[robot.target_berth_id].empty()) {
+            Goods g = map->goods_queue[robot.target_berth_id].top();
+            map->goods_queue[robot.target_berth_id].pop();
+            auto it = map->goods.find(g.goods_id);
+            if(it != map->goods.end() && map->goods[it->second.goods_id].assigned_robot_id == -1) {
+                astar_get_two_path(robot.x, robot.y, g.x, g.y, map->char_map, robot.path_to_goods, map);
                 robot.task_type = 0;
-                robot.target_goods_id = it->second.goods_id;
+                robot.target_goods_id = g.goods_id;
                 it->second.assigned_robot_id = robot.robot_id;
                 break;
             }
         }
-        // 没分到
-        if(robot.is_idle()) {
-            for(auto it = map->goods.begin(); it != map->goods.end(); ++it) {
-                if(it->second.assigned_robot_id != -1 || 
-                        map->path_to_berth[it->second.x][it->second.y][robot.target_berth_id] == -1) 
-                    continue;
-                // 用a*算法查看是否有路径，有就分配, 同时分配货物到泊位路径图（已经预计算过）
-                if (astar_get_two_path(robot.x, robot.y, it->second.x, it->second.y, 
-                                        map->char_map, robot.path_to_goods, map)) {
-                    robot.task_type = 0;
-                    robot.target_goods_id = it->second.goods_id;
-                    it->second.assigned_robot_id = robot.robot_id;
-                }
-                break;
-            }
-        }
+        // 没找着，随机选一个
     }
 }
 
