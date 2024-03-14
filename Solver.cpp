@@ -1,17 +1,10 @@
 #include "Solver.h"
 #include "common.h"
 #include "PathPlanning.h"
+#include "utils.h"
 #include <iostream>
 #include <unordered_set>
 
-int convert_xy(int _x, int _y) {
-    return MAP_W * _x + _y;
-}
-
-void predict_nxy(int _x, int _y, int move, int& nx, int& ny) {
-    nx = _x + dx[move];
-    ny = _y + dy[move];
-}
 
 int Solver::goods_id = 0;
 
@@ -74,7 +67,6 @@ int Solver::remove_expired_goods() {
                 remove_num++;
                 map->robots[it->second.assigned_robot_id].task_type = -1;
                 map->robots[it->second.assigned_robot_id].target_goods_id = -1;
-                map->robots[it->second.assigned_robot_id].target_berth_id = -1;
             }
             it = map->goods.erase(it); // erase 后 it 自动更新为下一个元素的迭代器
         } else {
@@ -104,52 +96,60 @@ void Solver::update_assign_tasks() {
                 break;
             }
         }
-        // // 没分到
-        // if(robot.is_idle()) {
-        //     for(auto it = map->goods.begin(); it != map->goods.end(); ++it) {
-        //         if(it->second.assigned_robot_id != -1) 
-        //             continue;
-        //         // 用a*算法查看是否有路径，有就分配, 同时分配货物到泊位路径图（已经预计算过）
-        //         if (astar_get_two_path(robot.x, robot.y, it->second.x, it->second.y, 
-        //                                 map->char_map, robot.path_to_goods, map)) {
-        //             robot.task_type = 0;
-        //             robot.target_goods_id = it->second.goods_id;
-        //             it->second.assigned_robot_id = robot.robot_id;
-        //         }
-        //         break;
-        //     }
-        // }
+        // 没分到
+        if(robot.is_idle()) {
+            for(auto it = map->goods.begin(); it != map->goods.end(); ++it) {
+                if(it->second.assigned_robot_id != -1 || 
+                        map->path_to_berth[it->second.x][it->second.y][robot.target_berth_id] == -1) 
+                    continue;
+                // 用a*算法查看是否有路径，有就分配, 同时分配货物到泊位路径图（已经预计算过）
+                if (astar_get_two_path(robot.x, robot.y, it->second.x, it->second.y, 
+                                        map->char_map, robot.path_to_goods, map)) {
+                    robot.task_type = 0;
+                    robot.target_goods_id = it->second.goods_id;
+                    it->second.assigned_robot_id = robot.robot_id;
+                }
+                break;
+            }
+        }
     }
 }
 
 void Solver::output_frame() {
     unordered_set<int> nxy_set; // 记录当前所有机器人下一步路径，如果已经有机器人要走这个路径，就暂停避免碰撞
+    unordered_set<int> cur_xy_set;  // 记录当前所有机器人的位置，用于检测对撞
     // 机器人动作
     for(auto& robot : map->robots) {
 #ifdef DEBUG
             robot.show();
 #endif
+        cur_xy_set.insert(convert_xy(robot.x, robot.y));
         if(!robot.is_valid)
             continue;
         if(robot.status == 0) {
+            nxy_set.insert(convert_xy(robot.x, robot.y));
             continue;
         }
         if(robot.is_idle()) {
             // 未来可能让其向远离其他机器人方向移动
+            nxy_set.insert(convert_xy(robot.x, robot.y));
             continue;
         }
         int nx = robot.x, ny = robot.y;
         switch (robot.task_type) {
         case -1: // 可能送货最后一步碰撞导致送货失败
-            if(robot.goods == 1)
+            if(robot.goods == 1) {
                 robot.task_type = 1;
+                nxy_set.insert(convert_xy(robot.x, robot.y));
+            }
             break;
         case 0: // 取货
             // path非空，就根据path移动
             if(!robot.path_to_goods.empty()) {
                 predict_nxy(robot.x, robot.y, robot.path_to_goods.front(), nx, ny);
-                // 下一步不会撞到其他机器人，同时不会撞到障碍
-                if(nxy_set.find(convert_xy(nx, ny)) == nxy_set.end() && map->valid_to_berth(nx, ny)) {
+                // 下一步不会撞到其他机器人，同时不会撞到障碍，也没有对撞
+                if(nxy_set.find(convert_xy(nx, ny)) == nxy_set.end() && map->valid_to_berth(nx, ny) &&
+                    !(cur_xy_set.find(convert_xy(nx, ny)) != cur_xy_set.end() && nxy_set.find(convert_xy(robot.x, robot.y)) != nxy_set.end())) {
                     printf("move %d %d\n", robot.robot_id, robot.path_to_goods.front());
                     nxy_set.insert(convert_xy(nx, ny));
                     robot.path_to_goods.pop_front();
@@ -157,6 +157,21 @@ void Solver::output_frame() {
                     // 如果要撞到障碍了，说明可能发生跳帧，这一步不走，重新计算路径
                     astar_get_two_path(robot.x, robot.y, map->goods[robot.target_goods_id].x, map->goods[robot.target_goods_id].y, 
                                     map->char_map, robot.path_to_goods, map);
+                    nxy_set.insert(convert_xy(robot.x, robot.y));
+                }else if(cur_xy_set.find(convert_xy(nx, ny)) != cur_xy_set.end() && nxy_set.find(convert_xy(robot.x, robot.y)) != nxy_set.end()) {
+                    // 如果对撞，就往没障碍的方向让一步
+                    for(int i = 0; i < 4; i++) {
+                        predict_nxy(robot.x, robot.y, i, nx, ny);
+                        if(map->valid_to_berth(nx, ny) && nxy_set.find(convert_xy(nx, ny)) == nxy_set.end() 
+                            && cur_xy_set.find(convert_xy(nx, ny)) == cur_xy_set.end()) {
+                            printf("move %d %d\n", robot.robot_id, i);
+                            robot.path_to_goods.push_front(reverse_dir(i));
+                            nxy_set.insert(convert_xy(nx, ny));
+                            break;
+                        }
+                    }
+                }else {
+                    nxy_set.insert(convert_xy(robot.x, robot.y));
                 }
             }
             // 到达目的地
@@ -174,14 +189,31 @@ void Solver::output_frame() {
             // 没有货物，可能是之前前往货物的路上最后一步碰撞了
             if(robot.goods == 0) {
                 robot.task_type = 0;
+                nxy_set.insert(convert_xy(robot.x, robot.y));
                 break;
             }
             if(map->path_to_berth[robot.x][robot.y][robot.target_berth_id] != -1) {
                 predict_nxy(robot.x, robot.y, map->path_to_berth[robot.x][robot.y][robot.target_berth_id], nx, ny);
                 // 下一步不会撞到其他机器人，走
-                if(nxy_set.find(convert_xy(nx, ny)) == nxy_set.end()) {
+                if(nxy_set.find(convert_xy(nx, ny)) == nxy_set.end() && 
+                     !(cur_xy_set.find(convert_xy(nx, ny)) != cur_xy_set.end() && nxy_set.find(convert_xy(robot.x, robot.y)) != nxy_set.end())) {
                     printf("move %d %d\n", robot.robot_id, map->path_to_berth[robot.x][robot.y][robot.target_berth_id]);
                     nxy_set.insert(convert_xy(nx, ny));
+                }else if(cur_xy_set.find(convert_xy(nx, ny)) != cur_xy_set.end() && 
+                        nxy_set.find(convert_xy(robot.x, robot.y)) != nxy_set.end()) {
+                    // 如果对撞，就往没障碍的方向让一步
+                    for(int i = 0; i < 4; i++) {
+                        predict_nxy(robot.x, robot.y, i, nx, ny);
+                        if(map->valid_to_berth(nx, ny) && nxy_set.find(convert_xy(nx, ny)) == nxy_set.end() 
+                            && cur_xy_set.find(convert_xy(nx, ny)) == cur_xy_set.end()) {
+                            printf("move %d %d\n", robot.robot_id, i);
+                            robot.path_to_goods.push_front(reverse_dir(i));
+                            nxy_set.insert(convert_xy(nx, ny));
+                            break;
+                        }
+                    }
+                }else {
+                    nxy_set.insert(convert_xy(robot.x, robot.y));
                 }
             }
             // 到达目的地
@@ -204,7 +236,10 @@ void Solver::output_frame() {
                 // 运输完成，随机找个泊位停靠，后续改成前往货物多运输快的泊位
                 printf("ship %d %d\n", boat.boat_id, boat.boat_id * 2 + rand() % 2);
             }else {
-                if(rand() % 500 == 1)
+                // 最后关头，赶紧走
+                if(cur_frame + map->berths[boat.target_berth].transport_time >= 15000)
+                    printf("go %d\n",boat.boat_id);
+                else if(rand() % 300 == 1)
                     printf("go %d\n",boat.boat_id);
             }
             break;

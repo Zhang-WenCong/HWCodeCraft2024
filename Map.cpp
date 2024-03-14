@@ -55,6 +55,7 @@ void Map::init_path_to_berth() {
 // 初始化机器人，设定其是否有效和初始泊位
 void Map::init_robots() {
     bool used_berth[BERTH_N] = {false};
+    // 先把最近的港口设为目标
     for(auto& robot : robots) {
         if(!valid_to_berth(robot.x, robot.y))
             robot.is_valid = false;
@@ -65,6 +66,7 @@ void Map::init_robots() {
             }
         }
     }
+    // 被占用了就找其他没占用的港口
     for(auto& robot : robots) {
         if(!robot.is_valid || robot.target_berth_id != -1)
             continue;

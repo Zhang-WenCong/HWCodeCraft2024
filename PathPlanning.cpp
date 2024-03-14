@@ -5,55 +5,10 @@
 #include <cmath>
 #include <vector>
 
-
-
-int reverse_dir(int dir) {
-    if(dir == 0)
-        return 1;
-    else if(dir == 1)
-        return 0;
-    else if(dir == 2)
-        return 3;
-    else if(dir == 3)
-        return 2;
-    return -1;
-}
-
 // 检查新位置是否有效
 bool isValid(int x, int y, int N, vector<vector<char>>& char_map) {
     return x >= 0 && x < N && y >= 0 && y < N && (char_map[x][y] == 'B' || char_map[x][y] == '.');
 }
-
-// bool bfs_get_full_path(int start_row, int start_col, int berth_id, vector<vector<char>> &char_map, Map *map) {
-//     vector<vector<bool>> visited(MAP_H, vector<bool>(MAP_W, false));
-//     vector<vector<list<int>>> path(MAP_H, vector<list<int>>(MAP_W)); // 路径
-
-//     queue<pair<int, int>> q;
-//     q.push({start_row, start_col});
-//     visited[start_row][start_col] = true;
-//     map->path_to_berth_id[start_row][start_col] = berth_id;
-
-//     while (!q.empty()) {
-//         auto [x, y] = q.front();
-//         q.pop();
-
-//         // 遍历所有可能的移动
-//         for (int i = 0; i < 4; ++i) {
-//             int nx = x + dx[i], ny = y + dy[i];
-//             if (isValid(nx, ny, MAP_H, char_map) && !visited[nx][ny]) {
-//                 q.push({nx, ny});
-//                 visited[nx][ny] = true;
-//                 path[nx][ny] = path[x][y];
-//                 path[nx][ny].push_front(reverse_dir(i));
-//                 if(map->path_to_berth[nx][ny].size() > path[nx][ny].size() || map->path_to_berth_id[nx][ny] == -1) {
-//                     map->path_to_berth[nx][ny] = path[nx][ny];
-//                     map->path_to_berth_id[nx][ny] = berth_id;
-//                 }
-//             }
-//         }
-//     }
-//     return true;
-// }
 
 bool bfs_get_full_canto(int start_row, int start_col, int berth_id, vector<vector<char>> &char_map, Map *map) {
     vector<vector<bool>> visited(MAP_H, vector<bool>(MAP_W, false));

@@ -2,6 +2,7 @@
 
 #include "Map.h"
 #include "common.h"
+#include "utils.h"
 #include <vector>
 
 using namespace std;

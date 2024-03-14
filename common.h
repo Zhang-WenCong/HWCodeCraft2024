@@ -13,3 +13,4 @@ const int GOODS_LIFE = 1000;  // 物品存活时间
 // 定义方向 右 左 上 下
 const int dx[] = {0, 0, -1, 1};
 const int dy[] = {1, -1, 0, 0};
+
