@@ -24,5 +24,7 @@ public:
 
     // 是否在泊位内
     bool is_in_berth(int _x, int _y);
+
+    int get_abs_len(int _x, int _y);
     
 };

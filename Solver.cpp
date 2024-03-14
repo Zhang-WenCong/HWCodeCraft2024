@@ -18,7 +18,7 @@ void Solver::get_frame(int frame_id_input) {
         int x, y, val;          // 货物坐标和金额
         scanf("%d%d%d", &x, &y, &val);
         if(map->valid_to_berth(x, y)) {
-            Goods goods(x, y, val, cur_frame, goods_id, val / map->path_to_berth_len[x][y]);
+            Goods goods(x, y, val, cur_frame, goods_id, val / map->path_to_berth_len[x][y][map->path_to_berth_id[x][y]]);
             map->goods[goods_id] = goods;
             map->goods_queue[map->path_to_berth_id[x][y]].push(goods);
             goods_id++;
@@ -90,7 +90,8 @@ void Solver::update_assign_tasks() {
             Goods g = map->goods_queue[robot.target_berth_id].top();
             map->goods_queue[robot.target_berth_id].pop();
             auto it = map->goods.find(g.goods_id);
-            if(it != map->goods.end() && map->goods[it->second.goods_id].assigned_robot_id == -1) {
+            if(it != map->goods.end() && it->second.assigned_robot_id == -1
+                    && cur_frame + map->path_to_berth_len[it->second.x][it->second.y][robot.target_berth_id] - it->second.gen_frame < 950) {
                 astar_get_two_path(robot.x, robot.y, g.x, g.y, map->char_map, robot.path_to_goods, map);
                 robot.task_type = 0;
                 robot.target_goods_id = g.goods_id;
@@ -99,6 +100,20 @@ void Solver::update_assign_tasks() {
             }
         }
         // 没找着，随机选一个
+        if(robot.is_idle()) {
+            for(auto it = map->goods.begin(); it != map->goods.end(); ++it) {
+                if(it->second.assigned_robot_id == -1 
+                        && map->path_to_berth[it->second.x][it->second.y][robot.target_berth_id] != -1  
+                        && map->path_to_berth_len[it->second.x][it->second.y][robot.target_berth_id] < 100
+                        && cur_frame + map->path_to_berth_len[it->second.x][it->second.y][robot.target_berth_id] - it->second.gen_frame < 500) {
+                    astar_get_two_path(robot.x, robot.y, it->second.x, it->second.y, map->char_map, robot.path_to_goods, map);
+                    robot.task_type = 0;
+                    robot.target_goods_id = it->second.goods_id;
+                    it->second.assigned_robot_id = robot.robot_id;
+                    break;
+                }
+            }
+        }
     }
 }
 
@@ -224,25 +239,24 @@ void Solver::output_frame() {
         case 1: // 装货状态或运输完成状态
             if(boat.target_berth == -1) { 
                 printf("ship %d %d\n", boat.boat_id, boat.boat_id * 2 + rand() % 2);
-                // if(map->berths[boat.boat_id * 2].cur_goods_num > map->berths[boat.boat_id * 2 + 1].cur_goods_num)
-                //     printf("ship %d %d\n", boat.boat_id, boat.boat_id * 2);
-                // else
-                //     printf("ship %d %d\n", boat.boat_id, boat.boat_id * 2 + 1);
+                if(map->berths[boat.boat_id * 2].cur_goods_num > map->berths[boat.boat_id * 2 + 1].cur_goods_num)
+                    printf("ship %d %d\n", boat.boat_id, boat.boat_id * 2);
+                else
+                    printf("ship %d %d\n", boat.boat_id, boat.boat_id * 2 + 1);
                 boat.cur_goods = 0;
             }else {
                 // 最后关头，赶紧走
                 if(cur_frame + map->berths[boat.target_berth].transport_time >= 15000)
                     printf("go %d\n",boat.boat_id);
-                else if(rand() % 300 == 1)
-                    printf("go %d\n",boat.boat_id);
-                // else if(boat.cur_goods >= boat.capacity / 2)
+                // else if(rand() % 300 == 1)
                 //     printf("go %d\n",boat.boat_id);
-                // else {
-                //     int l_num = min(map->berths[boat.target_berth].cur_goods_num, map->berths[boat.target_berth].loading_speed);
-                //     boat.cur_goods += l_num;
-                //     map->berths[boat.target_berth].cur_goods_num -= l_num;
-                // }
-
+                else if(boat.cur_goods >= boat.capacity)
+                    printf("go %d\n",boat.boat_id);
+                else {
+                    int l_num = min(map->berths[boat.target_berth].cur_goods_num, map->berths[boat.target_berth].loading_speed);
+                    boat.cur_goods += l_num;
+                    map->berths[boat.target_berth].cur_goods_num -= l_num;
+                }
             }
             break;
         case 2: // 泊位外等待状态 

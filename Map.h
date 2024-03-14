@@ -28,7 +28,7 @@ public:
 
     // [i][j][k] 表示坐标i，j到泊位k的下一步动作
     vector<vector<vector<int>>> path_to_berth = vector<vector<vector<int>> >(200, vector<vector<int>>(200, vector<int>(BERTH_N, -1)));
-    vector<vector<int>> path_to_berth_len = vector<vector<int> >(200, vector<int>(200, 100000));
+    vector<vector<vector<int>>> path_to_berth_len = vector<vector<vector<int>> >(200, vector<vector<int>>(200, vector<int>(BERTH_N, 100000)));
     vector<vector<int>> path_to_berth_id = vector<vector<int> >(200, vector<int>(200, -1));           // 每个点的目标berth id，-1表示不能到达任意一个berth
 
     // 初始化每个点到最近berth的路径

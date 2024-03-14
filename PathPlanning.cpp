@@ -32,9 +32,9 @@ bool bfs_get_full_canto(int start_row, int start_col, int berth_id, vector<vecto
                 visited[nx][ny] = true;
                 path_len[nx][ny] = path_len[x][y] + 1;
                 map->path_to_berth[nx][ny][berth_id] = reverse_dir(i);
-                if(map->path_to_berth_len[nx][ny] > path_len[nx][ny] || map->path_to_berth_id[nx][ny] == -1) {
-                    map->path_to_berth_len[nx][ny] = path_len[nx][ny];
+                if(map->path_to_berth_id[nx][ny] == -1 || map->path_to_berth_len[nx][ny][map->path_to_berth_id[nx][ny]] > path_len[nx][ny]) {
                     map->path_to_berth_id[nx][ny] = berth_id;
+                    map->path_to_berth_len[nx][ny][berth_id] = path_len[nx][ny];
                 }
             }
         }
