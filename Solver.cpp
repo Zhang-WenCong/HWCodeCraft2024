@@ -105,7 +105,8 @@ void Solver::update_assign_tasks() {
                 if(it->second.assigned_robot_id == -1 
                         && map->path_to_berth[it->second.x][it->second.y][robot.target_berth_id] != -1  
                         && map->path_to_berth_len[it->second.x][it->second.y][robot.target_berth_id] < 100
-                        && cur_frame + map->path_to_berth_len[it->second.x][it->second.y][robot.target_berth_id] - it->second.gen_frame < 500) {
+                        && cur_frame + map->path_to_berth_len[it->second.x][it->second.y][robot.target_berth_id] - it->second.gen_frame < 950)
+                {
                     astar_get_two_path(robot.x, robot.y, it->second.x, it->second.y, map->char_map, robot.path_to_goods, map);
                     robot.task_type = 0;
                     robot.target_goods_id = it->second.goods_id;
@@ -230,7 +231,6 @@ void Solver::output_frame() {
             break;
         }
     }
-
     // 船只动作
     for(auto& boat : map->boats) {
         switch (boat.status) {
