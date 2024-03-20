@@ -238,20 +238,28 @@ void Solver::output_frame() {
             break;
         case 1: // 装货状态或运输完成状态
             if(boat.target_berth == -1) { 
-                printf("ship %d %d\n", boat.boat_id, boat.boat_id * 2 + rand() % 2);
-                if(map->berths[boat.boat_id * 2].cur_goods_num > map->berths[boat.boat_id * 2 + 1].cur_goods_num)
-                    printf("ship %d %d\n", boat.boat_id, boat.boat_id * 2);
-                else
-                    printf("ship %d %d\n", boat.boat_id, boat.boat_id * 2 + 1);
+                int tar_berth = -1;
+                for(auto& berth : map->berths) {
+                    if(!berth.is_used && (berth.cur_goods_num > 0 || map->goods_queue[berth.berth_id].size() > 0) && 
+                        (tar_berth == -1 || berth.cur_goods_num > map->berths[tar_berth].cur_goods_num)) {
+                        tar_berth = berth.berth_id;
+                    }
+                }
+                if(tar_berth == -1)
+                    break;
+                map->berths[tar_berth].is_used = true;
+                printf("ship %d %d\n", boat.boat_id, tar_berth);
                 boat.cur_goods = 0;
             }else {
                 // 最后关头，赶紧走
-                if(cur_frame + map->berths[boat.target_berth].transport_time >= 15000)
+                if(cur_frame + map->berths[boat.target_berth].transport_time >= 15000) {
                     printf("go %d\n",boat.boat_id);
-                // else if(rand() % 300 == 1)
-                //     printf("go %d\n",boat.boat_id);
-                else if(boat.cur_goods >= boat.capacity)
+                    map->berths[boat.target_berth].is_used = false;
+                }
+                else if(boat.cur_goods >= boat.capacity) {
                     printf("go %d\n",boat.boat_id);
+                    map->berths[boat.target_berth].is_used = false;
+                }
                 else {
                     int l_num = min(map->berths[boat.target_berth].cur_goods_num, map->berths[boat.target_berth].loading_speed);
                     boat.cur_goods += l_num;
