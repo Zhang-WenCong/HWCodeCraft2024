@@ -34,6 +34,10 @@ void Map::show() {
     // }
 
     // fprintf(stderr, "\n");
+
+    for(auto& berth : berths) {
+        berth.show();
+    }
 }
 
 // 初始化每个点到最近berth的路径

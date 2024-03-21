@@ -28,5 +28,7 @@ public:
     bool is_in_berth(int _x, int _y);
 
     int get_abs_len(int _x, int _y);
+
+    void show();
     
 };
