@@ -4,6 +4,7 @@
 #include "utils.h"
 #include <iostream>
 #include <unordered_set>
+#include <cmath>
 
 
 int Solver::goods_id = 0;
@@ -259,6 +260,22 @@ void Solver::output_frame() {
                 else if(boat.cur_goods >= boat.capacity) {
                     printf("go %d\n",boat.boat_id);
                     map->berths[boat.target_berth].is_used = false;
+                }else if(map->berths[boat.target_berth].cur_goods_num == 0){
+                    // 如果当前泊位没啥货物了，找个其他货物多的泊位
+                    int tar_berth = boat.target_berth;
+                    for(auto& berth : map->berths) {
+                        if(!berth.is_used && berth.cur_goods_num + 15 > boat.capacity - boat.cur_goods
+                            // && berth.transport_time >= map->berths[tar_berth].transport_time
+                        ) {
+                            tar_berth = berth.berth_id;
+                        }
+                    }
+                    if(tar_berth != boat.target_berth && 
+                            cur_frame + map->berths[tar_berth].transport_time <= 14500 - (boat.capacity - boat.cur_goods) / map->berths[tar_berth].loading_speed){
+                        map->berths[tar_berth].is_used = true;
+                        map->berths[boat.target_berth].is_used = false;
+                        printf("ship %d %d\n", boat.boat_id, tar_berth);
+                    }
                 }
                 else {
                     int l_num = min(map->berths[boat.target_berth].cur_goods_num, map->berths[boat.target_berth].loading_speed);
