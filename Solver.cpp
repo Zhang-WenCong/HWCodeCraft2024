@@ -164,7 +164,7 @@ void Solver::output_frame() {
                     nxy_set.insert(convert_xy(robot.x, robot.y));
                 }else if(cur_xy_set.find(convert_xy(nx, ny)) != cur_xy_set.end() && nxy_set.find(convert_xy(robot.x, robot.y)) != nxy_set.end()) {
                     // 如果对撞，就往没障碍的方向让一步
-                    for(int i = 0; i < 4; i++) {
+                    for(int i = 3; i >= 0; i--) {
                         predict_nxy(robot.x, robot.y, i, nx, ny);
                         if(map->valid_to_berth(nx, ny) && nxy_set.find(convert_xy(nx, ny)) == nxy_set.end() 
                             && cur_xy_set.find(convert_xy(nx, ny)) == cur_xy_set.end()) {
@@ -206,7 +206,7 @@ void Solver::output_frame() {
                 }else if(cur_xy_set.find(convert_xy(nx, ny)) != cur_xy_set.end() && 
                         nxy_set.find(convert_xy(robot.x, robot.y)) != nxy_set.end()) {
                     // 如果对撞，就往没障碍的方向让一步
-                    for(int i = 0; i < 4; i++) {
+                    for(int i = 3; i >= 0; i--) {
                         predict_nxy(robot.x, robot.y, i, nx, ny);
                         if(map->valid_to_berth(nx, ny) && nxy_set.find(convert_xy(nx, ny)) == nxy_set.end() 
                             && cur_xy_set.find(convert_xy(nx, ny)) == cur_xy_set.end()) {
@@ -264,14 +264,14 @@ void Solver::output_frame() {
                     // 如果当前泊位没啥货物了，找个其他货物多的泊位
                     int tar_berth = boat.target_berth;
                     for(auto& berth : map->berths) {
-                        if(!berth.is_used && berth.cur_goods_num + 15 > boat.capacity - boat.cur_goods
+                        if(!berth.is_used && berth.cur_goods_num + 15 >= boat.capacity - boat.cur_goods
                             // && berth.transport_time >= map->berths[tar_berth].transport_time
                         ) {
                             tar_berth = berth.berth_id;
                         }
                     }
                     if(tar_berth != boat.target_berth && 
-                            cur_frame + map->berths[tar_berth].transport_time <= 14500 - (boat.capacity - boat.cur_goods) / map->berths[tar_berth].loading_speed){
+                            cur_frame + map->berths[tar_berth].transport_time <= 14500 - (boat.capacity - boat.cur_goods)){
                         map->berths[tar_berth].is_used = true;
                         map->berths[boat.target_berth].is_used = false;
                         printf("ship %d %d\n", boat.boat_id, tar_berth);

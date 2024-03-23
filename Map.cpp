@@ -100,5 +100,5 @@ void Map::init_robots() {
 
 // 判断某个点能否到达berth
 bool Map::valid_to_berth(int _x, int _y) {
-    return path_to_berth_id[_x][_y] != -1;
+    return _x >= 0 && _x < 200 && _y >= 0 && _y < 200 && path_to_berth_id[_x][_y] != -1;
 }
