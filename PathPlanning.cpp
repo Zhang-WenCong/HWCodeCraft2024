@@ -7,7 +7,8 @@
 
 // 检查新位置是否有效
 bool isValid(int x, int y, int N, vector<vector<char>>& char_map) {
-    return x >= 0 && x < N && y >= 0 && y < N && (char_map[x][y] == 'B' || char_map[x][y] == '.');
+    return x >= 0 && x < N && y >= 0 && y < N && 
+        (char_map[x][y] == 'B' || char_map[x][y] == '.' || char_map[x][y] == '>' || char_map[x][y] == 'C' || char_map[x][y] == 'c');
 }
 
 bool bfs_get_full_canto(int start_row, int start_col, int berth_id, vector<vector<char>> &char_map, Map *map) {

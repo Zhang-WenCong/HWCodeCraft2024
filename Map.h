@@ -17,11 +17,20 @@ public:
     int height = 200;
     int width = 200;
     int n_robots = 10, n_berths = 10, n_boats = 5;
+
+    int type = 3;
     
     vector<vector<char>> char_map = vector<vector<char> >(200, vector<char>(200));
     vector<Robot> robots;
     vector<Berth> berths;
     vector<Boat>  boats;
+
+    // 机器人购买地
+    vector<pair<int, int>> robot_purchase_point;
+    // 船只购买地
+    vector<pair<int, int>> boat_purchase_point;
+    // 交货点
+    vector<pair<int, int>> delivery_point;
     
     unordered_map<int, Goods> goods;
     vector<priority_queue<Goods> > goods_queue = vector(10, priority_queue<Goods>());
@@ -33,9 +42,6 @@ public:
 
     // 初始化每个点到最近berth的路径
     void init_path_to_berth();
-
-    // 初始化机器人，设定其是否有效
-    void init_robots();
 
     // 判断某个点能否到达berth
     bool valid_to_berth(int _x, int _y);

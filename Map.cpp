@@ -27,12 +27,6 @@ void Map::show() {
     }
     fprintf(stderr, "----- PATH END -----\n");
 
-    // auto tmp = path_to_berth[55][89];
-    // while(!tmp.empty()) {
-    //     fprintf(stderr, "->%d", tmp.front());
-    //     tmp.pop_front();
-    // }
-
     // fprintf(stderr, "\n");
 
     for(auto& berth : berths) {
@@ -51,48 +45,6 @@ void Map::init_path_to_berth() {
             for(int j = 0; j < 4; j++) {
                 path_to_berth[berth.x + i][berth.y + j][berth.berth_id] = -1;
                 path_to_berth_id[berth.x + i][berth.y + j] = berth.berth_id;
-            }
-        }
-    }
-
-}
-
-// 初始化机器人，设定其是否有效和初始泊位
-void Map::init_robots() {
-    vector<bool> used_berth(10, false);
-    // 先把最近的港口设为目标
-    for(auto& robot : robots) {
-        if(!valid_to_berth(robot.x, robot.y))
-            robot.is_valid = false;
-        else {
-            if(!used_berth[path_to_berth_id[robot.x][robot.y]]) {
-                robot.target_berth_id = path_to_berth_id[robot.x][robot.y];
-                used_berth[path_to_berth_id[robot.x][robot.y]] = true;
-            }
-        }
-    }
-    // 被占用了就找其他没占用的港口
-    for(auto& robot : robots) {
-        if(!robot.is_valid || robot.target_berth_id != -1)
-            continue;
-
-        for(int i = 0; i < BERTH_N; i++) {
-            if(!used_berth[i] && path_to_berth[robot.x][robot.y][i] != -1){
-                robot.target_berth_id = i;
-                used_berth[i] = true;  
-                break;
-            }
-        }
-    }
-    for(auto& robot : robots) {
-        if(!robot.is_valid || robot.target_berth_id != -1)
-            continue;
-        else {
-            for(int i = 0; i < BERTH_N; i++) {
-                if(path_to_berth[robot.x][robot.y][i] != -1){
-                    robot.target_berth_id = i;
-                    break;
-                }
             }
         }
     }

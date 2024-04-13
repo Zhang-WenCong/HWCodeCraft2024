@@ -9,7 +9,6 @@ using namespace std;
 
 void Init(Map& map) {
     char line[1024];
-    int robots_n = 0;
     int boat_capacity;
 
     // 读取地图数据
@@ -18,34 +17,34 @@ void Init(Map& map) {
         for (int col = 0; col < MAP_W; col++) {
             map.char_map[row][col] = line[col];
 
-            if (line[col] == 'A') {
-                Robot robot(robots_n, row, col);
-                map.robots.push_back(robot);
-                robots_n++;
-                map.char_map[row][col] = '.';
+            if(line[col] == 'R') {
+                map.robot_purchase_point.push_back(make_pair(row, col));
+                map.char_map[row][col] = '>';
             }
+            else if(line[col] == 'S') {
+                map.boat_purchase_point.push_back(make_pair(row, col));
+                map.char_map[row][col] = '~';
+            }  
+            else if(line[col] == 'T')
+                map.delivery_point.push_back(make_pair(row, col));
         }
     }
-        
-    for(int i = 0; i < BERTH_N; i++) {
-        Berth berth;
-        scanf("%d%d%d%d%d", &berth.berth_id, &berth.x, &berth.y, &berth.transport_time, &berth.loading_speed);
-        map.berths.push_back(berth);
-    }
-
-    scanf("%d", &boat_capacity);
-    for (int i = 0; i < BOAT_N; i++) {
-        map.boats.push_back({i, boat_capacity});
+    
+    int berth_num;
+    scanf("%d", &berth_num);
+    for(int i = 0; i < berth_num; i ++)
+    {
+        int id, x, y, load_speed;
+        scanf("%d%d%d%d", &id, &x, &y, &load_speed);
+        // fprintf(stderr, "%d %d %d %d\n", id, x, y, load_speed);
+        map.berths.push_back({id, x, y, load_speed});
     }
     
+    scanf("%d", &boat_capacity);
     char okk[100];
     scanf("%s", okk);
-
     
-    // auto start = clock();
     map.init_path_to_berth();
-    map.init_robots();
-    // fprintf(stderr, "cost time: %d s\n", static_cast<int>(clock() - start) / CLOCKS_PER_SEC);
 
 #ifdef DEBUG
     map.show();

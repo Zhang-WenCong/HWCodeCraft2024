@@ -18,6 +18,8 @@ void Solver::get_frame(int frame_id_input) {
     for(int i = 0; i < num; i ++) {
         int x, y, val;          // 货物坐标和金额
         scanf("%d%d%d", &x, &y, &val);
+        if(val == 0)
+            continue;
         if(map->valid_to_berth(x, y)) {
             Goods goods(x, y, val, cur_frame, goods_id, val / map->path_to_berth_len[x][y][map->path_to_berth_id[x][y]]);
             map->goods[goods_id] = goods;
@@ -26,12 +28,24 @@ void Solver::get_frame(int frame_id_input) {
         }
     }
 
-    for(int i = 0; i < ROBOT_N; i ++) {
-        scanf("%d%d%d%d", &map->robots[i].goods, &map->robots[i].x, &map->robots[i].y, &map->robots[i].status);
+    int robot_num;
+    scanf("%d", &robot_num);
+    fprintf(stderr, "robot_num, %d\n", robot_num);
+    for(int i = 0; i < robot_num; i ++) {
+        int robot_id;
+        scanf("%d", &robot_id);
+        scanf("%d%d%d", &map->robots[robot_id].goods, &map->robots[robot_id].x, &map->robots[robot_id].y);
     }
-    for(int i = 0; i < BOAT_N; i ++)
-        scanf("%d%d\n", &map->boats[i].status, &map->boats[i].target_berth);
-    
+
+    int boat_num;
+    scanf("%d", &boat_num);
+    fprintf(stderr, "boat_num, %d\n", boat_num);
+    for(int i = 0; i < boat_num; i ++) {
+        int boat_id;
+        scanf("%d", &boat_id);
+        scanf("%d%d%d%d%d\n", &map->boats[boat_id].cur_goods, &map->boats[i].x, &map->boats[i].y, &map->boats[i].dir, &map->boats[i].status);
+    } 
+
     char okk[100];
     scanf("%s", okk);
 }
@@ -120,6 +134,18 @@ void Solver::update_assign_tasks() {
 }
 
 void Solver::output_frame() {
+
+    if(money >= robot_price && map->robots.size() <= 1){
+        printf("lbot %d %d\n", map->robot_purchase_point[0].first, map->robot_purchase_point[0].second);
+        map->robots.push_back({map->robots.size(), map->robot_purchase_point[0].first, map->robot_purchase_point[0].second});
+        
+    }
+
+    if(money >= boat_price && map->boats.size() <= 1){
+        printf("lboat %d %d\n", map->boat_purchase_point[0].first, map->boat_purchase_point[0].second);
+        map->boats.push_back({map->boats.size(), map->boat_purchase_point[0].first, map->boat_purchase_point[0].second});
+    }
+
     unordered_set<int> nxy_set; // 记录当前所有机器人下一步路径，如果已经有机器人要走这个路径，就暂停避免碰撞
     unordered_set<int> cur_xy_set;  // 记录当前所有机器人的位置，用于检测对撞
     // 机器人动作
@@ -233,61 +259,69 @@ void Solver::output_frame() {
         }
     }
     // 船只动作
-    for(auto& boat : map->boats) {
-        switch (boat.status) {
-        case 0: // 移动中
-            break;
-        case 1: // 装货状态或运输完成状态
-            if(boat.target_berth == -1) { 
-                int tar_berth = -1;
-                for(auto& berth : map->berths) {
-                    if(!berth.is_used && (berth.cur_goods_num > 0 || map->goods_queue[berth.berth_id].size() > 0) && 
-                        (tar_berth == -1 || berth.cur_goods_num > map->berths[tar_berth].cur_goods_num)) {
-                        tar_berth = berth.berth_id;
-                    }
-                }
-                if(tar_berth == -1)
-                    break;
-                map->berths[tar_berth].is_used = true;
-                printf("ship %d %d\n", boat.boat_id, tar_berth);
-                boat.cur_goods = 0;
-            }else {
-                // 最后关头，赶紧走
-                if(cur_frame + map->berths[boat.target_berth].transport_time >= 15000) {
-                    printf("go %d\n",boat.boat_id);
-                    map->berths[boat.target_berth].is_used = false;
-                }
-                else if(boat.cur_goods >= boat.capacity) {
-                    printf("go %d\n",boat.boat_id);
-                    map->berths[boat.target_berth].is_used = false;
-                }else if(map->berths[boat.target_berth].cur_goods_num == 0){
-                    // 如果当前泊位没啥货物了，找个其他货物多的泊位
-                    int tar_berth = boat.target_berth;
-                    for(auto& berth : map->berths) {
-                        if(!berth.is_used && berth.cur_goods_num + 15 >= boat.capacity - boat.cur_goods
-                            // && berth.transport_time >= map->berths[tar_berth].transport_time
-                        ) {
-                            tar_berth = berth.berth_id;
-                        }
-                    }
-                    if(tar_berth != boat.target_berth && 
-                            cur_frame + map->berths[tar_berth].transport_time <= 14500 - (boat.capacity - boat.cur_goods)){
-                        map->berths[tar_berth].is_used = true;
-                        map->berths[boat.target_berth].is_used = false;
-                        printf("ship %d %d\n", boat.boat_id, tar_berth);
-                    }
-                }
-                else {
-                    int l_num = min(map->berths[boat.target_berth].cur_goods_num, map->berths[boat.target_berth].loading_speed);
-                    boat.cur_goods += l_num;
-                    map->berths[boat.target_berth].cur_goods_num -= l_num;
-                }
-            }
-            break;
-        case 2: // 泊位外等待状态 
-            break;
-        default:
-            break;
-        }
-    }
+    // for(auto& boat : map->boats) {
+    //     switch (boat.status) {
+    //     case 0: // 移动中
+    //         break;
+    //     case 1: // 装货状态或运输完成状态
+    //         if(boat.target_berth == -1) { 
+    //             int tar_berth = -1;
+    //             for(auto& berth : map->berths) {
+    //                 if(!berth.is_used && (berth.cur_goods_num > 0 || map->goods_queue[berth.berth_id].size() > 0) && 
+    //                     (tar_berth == -1 || berth.cur_goods_num > map->berths[tar_berth].cur_goods_num)) {
+    //                     tar_berth = berth.berth_id;
+    //                 }
+    //             }
+    //             if(tar_berth == -1)
+    //                 break;
+    //             map->berths[tar_berth].is_used = true;
+    //             printf("ship %d %d\n", boat.boat_id, tar_berth);
+    //             boat.cur_goods = 0;
+    //         }else {
+    //             // 最后关头，赶紧走
+    //             if(cur_frame + map->berths[boat.target_berth].transport_time >= 15000) {
+    //                 printf("go %d\n",boat.boat_id);
+    //                 map->berths[boat.target_berth].is_used = false;
+    //             }
+    //             else if(boat.cur_goods >= boat.capacity - 5) {
+    //                 printf("go %d\n",boat.boat_id);
+    //                 map->berths[boat.target_berth].is_used = false;
+    //             }else if(map->berths[boat.target_berth].cur_goods_num == 0){
+    //                 // 如果当前泊位没啥货物了，找个其他货物多的泊位
+    //                 int tar_berth = boat.target_berth;
+    //                 int hyparam;
+    //                 if(map->type == 1)
+    //                     hyparam = 18;
+    //                 else if(map->type == 2)
+    //                     hyparam = 19;
+    //                 else if(map->type == 3)
+    //                     hyparam = 15;
+    //                 for(auto& berth : map->berths) {
+    //                     if(!berth.is_used && berth.cur_goods_num + hyparam >= boat.capacity - boat.cur_goods
+    //                         && berth.cur_goods_num > map->berths[tar_berth].cur_goods_num
+    //                         // && berth.transport_time >= map->berths[tar_berth].transport_time
+    //                     ) {
+    //                         tar_berth = berth.berth_id;
+    //                     }
+    //                 }
+    //                 if(tar_berth != boat.target_berth && 
+    //                         cur_frame + map->berths[tar_berth].transport_time <= 14500 - (boat.capacity - boat.cur_goods)){
+    //                     map->berths[tar_berth].is_used = true;
+    //                     map->berths[boat.target_berth].is_used = false;
+    //                     printf("ship %d %d\n", boat.boat_id, tar_berth);
+    //                 }
+    //             }
+    //             else {
+    //                 int l_num = min(map->berths[boat.target_berth].cur_goods_num, map->berths[boat.target_berth].loading_speed);
+    //                 boat.cur_goods += l_num;
+    //                 map->berths[boat.target_berth].cur_goods_num -= l_num;
+    //             }
+    //         }
+    //         break;
+    //     case 2: // 泊位外等待状态 
+    //         break;
+    //     default:
+    //         break;
+    //     }
+    // }
 }

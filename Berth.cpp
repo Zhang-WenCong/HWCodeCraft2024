@@ -12,5 +12,5 @@ int Berth::get_abs_len(int _x, int _y) {
 }
 
 void Berth::show() {
-    fprintf(stderr, "Berth %d (x:%d, y:%d, transport_time:%d loading_speed:%d)\n", berth_id, x, y, transport_time, loading_speed);
+    fprintf(stderr, "Berth %d (x:%d, y:%d, loading_speed:%d)\n", berth_id, x, y, loading_speed);
 }
